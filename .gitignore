@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+backend/venv/
+
+# Node / Expo
+node_modules/
+app_prototype/.expo/
+npm-debug.log
+
+# Mac
+.DS_Store
+
+# Data & DBs (Depending on preference, we usually ignore vector DBs but keep the script, but I'll ignore only generated models if they exist. We need data folder)
+data/vector_db/
