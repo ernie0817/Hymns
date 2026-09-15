@@ -21,13 +21,22 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise SystemExit("Missing dependency: python-docx. Install it with: pip install python-docx") from exc
 
+try:
+    import textract
+except ImportError as exc:
+    logger.warning("Missing dependency: textract. Install it with: pip install textract (needed for .doc files)")
+    textract = None
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 PROCESSED_DIR = DATA_DIR / "processed"
+logger = logging.getLogger("hymn_parser")
+
 JSON_OUTPUT = PROCESSED_DIR / "hymns.json"
 DB_OUTPUT = PROCESSED_DIR / "hymns.db"
-SUPPORTED_EXTENSIONS = {".docx", ".pdf"}
+# 加入 .doc 支援
+SUPPORTED_EXTENSIONS = {".docx", ".pdf", ".doc"}
+
 
 logger = logging.getLogger("hymn_parser")
 logger.setLevel(logging.INFO)
@@ -251,17 +260,20 @@ def extract_lyrics(text: str, hymn_id: str, title: str) -> str:
         if re.fullmatch(r"\d{1,5}", value):
             continue
 
-        if title and normalize_whitespace(value) == normalize_whitespace(title):
-            if not seen_title:
-                seen_title = True
-                continue
+        # 這裡的邏輯過於嚴格，有時文件的 Title 帶有額外空白或標點符號，導致整首歌詞第一行被當作 Title 吃掉
+        # if title and normalize_whitespace(value) == normalize_whitespace(title):
+        #     if not seen_title:
+        #         seen_title = True
+        #         continue
 
-        if hymn_id and value == hymn_id:
-            continue
+        # hymn_id 有可能是 '1' 但文件中寫 '001'，過度匹配會刪除歌詞
+        # if hymn_id and value == hymn_id:
+        #     continue
 
         cleaned.append(line.rstrip())
 
     lyrics = "\n".join(cleaned).strip()
+    return lyrics
     if lyrics:
         return normalize_newlines(lyrics)
 
@@ -280,12 +292,31 @@ def extract_lyrics(text: str, hymn_id: str, title: str) -> str:
     return normalize_newlines("\n".join(fallback))
 
 
+import subprocess
+
+def read_doc_text(path: Path) -> str:
+    try:
+        # 使用 macOS 內建的 textutil 工具，速度快且不需額外安裝
+        result = subprocess.run(
+            ["textutil", "-convert", "txt", "-stdout", str(path)],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout
+    except Exception as e:
+        logger.warning(f"Failed to read .doc file using textutil {path}: {e}")
+        return ""
+
+
 def parse_document(path: Path) -> Optional[Dict[str, Any]]:
     try:
         if path.suffix.lower() == ".pdf":
             raw_text = read_pdf_text(path)
         elif path.suffix.lower() == ".docx":
             raw_text = read_docx_text(path)
+        elif path.suffix.lower() == ".doc":
+            raw_text = read_doc_text(path)
         else:
             logger.warning("Unsupported file type: %s", path)
             return None
@@ -348,14 +379,16 @@ def create_sqlite_db(db_path: Path) -> sqlite3.Connection:
     conn.execute(
         """
         CREATE TABLE hymns (
-            id TEXT PRIMARY KEY,
+            internal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT NOT NULL,
             title TEXT NOT NULL,
             category TEXT,
             lyrics TEXT NOT NULL,
             source_path TEXT,
             source_file TEXT,
             hash TEXT,
-            parsed_at TEXT
+            parsed_at TEXT,
+            UNIQUE(id, category)
         );
         """
     )
@@ -461,7 +494,7 @@ def main() -> int:
             return 0
 
         parsed_hymns: List[Dict[str, Any]] = []
-        seen_ids: set[str] = set()
+        seen_ids: Dict[str, Dict[str, Any]] = {}
 
         for document_path in documents:
             logger.info("Parsing file: %s", document_path)
@@ -469,15 +502,27 @@ def main() -> int:
             if hymn is None:
                 continue
 
+            category = str(hymn.get("category", "")).strip()
             hymn_id = str(hymn["id"]).strip()
-            if hymn_id and hymn_id in seen_ids:
-                logger.warning("Duplicate hymn id detected: %s | file=%s", hymn_id, document_path)
+            unique_key = f"{category}_{hymn_id}"
+
+            if not hymn_id:
+                parsed_hymns.append(hymn)
                 continue
 
-            if hymn_id:
-                seen_ids.add(hymn_id)
+            if unique_key in seen_ids:
+                existing_hymn = seen_ids[unique_key]
+                # 優先保留 PDF 版本，因為前端預覽需要 PDF 檔案
+                if document_path.suffix.lower() == ".pdf" and not existing_hymn["source_path"].lower().endswith(".pdf"):
+                    logger.info("Replacing existing entry with PDF version for: %s", unique_key)
+                    seen_ids[unique_key] = hymn
+                else:
+                    logger.warning("Duplicate hymn detected (ignoring non-pdf or already have pdf): %s | file=%s", unique_key, document_path)
+                continue
 
-            parsed_hymns.append(hymn)
+            seen_ids[unique_key] = hymn
+
+        parsed_hymns.extend(seen_ids.values())
 
         if not parsed_hymns:
             logger.warning("No valid hymn records were extracted from %s", DATA_DIR)

@@ -83,7 +83,7 @@ export const HymnListView = ({ navigation }: any) => {
       ) : (
         <FlatList
           data={hymns}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.category}_${item.id}_${index}`}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
         />

@@ -44,8 +44,13 @@ export const AIChatScreen = ({ navigation }: any) => {
 
   const handleRecommendationPress = async (rec: RecommendationItem) => {
     try {
-      const results = await searchHymns(rec.id);
-      if (results && results.length > 0) {
+      // 搜尋時帶入分類，並在結果中精確比對 ID，避免因為 LIKE 搜尋抓到 1001 之類的編號
+      const results = await searchHymns(rec.id, rec.category);
+      const exactMatch = results.find(h => h.id === rec.id);
+      
+      if (exactMatch) {
+        navigation.navigate('HymnDetail', { hymn: exactMatch });
+      } else if (results.length > 0) {
         navigation.navigate('HymnDetail', { hymn: results[0] });
       } else {
         alert('本地資料庫找不到該首詩歌');
@@ -61,8 +66,8 @@ export const AIChatScreen = ({ navigation }: any) => {
       {item.recommendations && item.recommendations.length > 0 && (
         <View style={styles.recommendationContainer}>
           <Text style={styles.recTitle}>推薦詩歌：</Text>
-          {item.recommendations.map((rec) => (
-            <TouchableOpacity key={rec.id} style={styles.recCard} onPress={() => handleRecommendationPress(rec)}>
+          {item.recommendations.map((rec, index) => (
+            <TouchableOpacity key={`${rec.category}_${rec.id}_${index}`} style={styles.recCard} onPress={() => handleRecommendationPress(rec)}>
               <Text style={styles.recCardTitle}>{rec.id} - {rec.title}</Text>
               <Text style={styles.recCardCategory}>{rec.category}</Text>
             </TouchableOpacity>

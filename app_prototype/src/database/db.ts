@@ -80,7 +80,7 @@ export const searchHymns = async (keyword: string, category: string = ''): Promi
       params.push(likeKeyword, likeKeyword, likeKeyword);
     }
 
-    query += ' LIMIT 50';
+    query += ' ORDER BY id ASC LIMIT 2000';
     
     const result = await database.getAllAsync<Hymn>(query, params);
     return result;

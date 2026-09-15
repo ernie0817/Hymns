@@ -11,13 +11,10 @@ export const HymnDetailScreen = ({ route }: any) => {
   // 將 source_path 轉換成後端伺服器的靜態檔案 URL
   const getPdfUrl = () => {
     if (!hymn.source_path) return '';
-    // source_path 已經包含 'data/' 前綴 (例如 'data/大本詩歌/xxx.pdf')
-    // 所以我們直接接在 BACKEND_URL 後面即可，不需要重複加上 /data/
     return encodeURI(`${BACKEND_URL}/${hymn.source_path}`);
   };
 
   const isPdfAvailable = hymn.source_path && hymn.source_path.toLowerCase().endsWith('.pdf');
-
 
   return (
     <View style={styles.container}>
@@ -43,7 +40,8 @@ export const HymnDetailScreen = ({ route }: any) => {
           <Text style={styles.title}>{hymn.id} - {hymn.title}</Text>
           <Text style={styles.category}>分類: {hymn.category}</Text>
           <View style={styles.divider} />
-          <Text style={styles.lyrics}>{hymn.lyrics}</Text>
+          {/* 去除過多的連續換行，提升閱讀體驗 */}
+          <Text style={styles.lyrics}>{hymn.lyrics.replace(/\n{3,}/g, '\n\n')}</Text>
         </ScrollView>
       ) : (
         <WebView 
@@ -62,23 +60,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     padding: 12, 
     backgroundColor: '#f2f2f7',
-    justifyContent: 'center' 
+    justifyContent: 'center',
+    paddingTop: 16
   },
   tabButton: { 
     flex: 1, 
-    paddingVertical: 8, 
+    paddingVertical: 10, 
     alignItems: 'center', 
     backgroundColor: '#e5e5ea', 
     marginHorizontal: 4,
-    borderRadius: 8 
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2 
   },
   tabButtonActive: { backgroundColor: '#007AFF' },
-  tabText: { color: '#333', fontWeight: '500' },
+  tabText: { color: '#333', fontWeight: '600', fontSize: 16 },
   tabTextActive: { color: '#fff', fontWeight: 'bold' },
-  content: { flex: 1, padding: 20 },
+  content: { flex: 1, padding: 24, backgroundColor: '#fafafa' },
   webview: { flex: 1 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1c1c1e' },
-  category: { fontSize: 16, color: '#8e8e93', marginTop: 8 },
-  divider: { height: 1, backgroundColor: '#ebebeb', marginVertical: 16 },
-  lyrics: { fontSize: 18, lineHeight: 28, color: '#333', paddingBottom: 40 }
+  title: { fontSize: 26, fontWeight: '800', color: '#1c1c1e', marginBottom: 6 },
+  category: { fontSize: 15, color: '#8e8e93', fontWeight: '500' },
+  divider: { height: 1, backgroundColor: '#d1d1d6', marginVertical: 20 },
+  lyrics: { 
+    fontSize: 20, 
+    lineHeight: 34, 
+    color: '#2c2c2e', 
+    paddingBottom: 60,
+    letterSpacing: 0.5,
+    textAlign: 'auto'
+  }
 });
