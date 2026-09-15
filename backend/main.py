@@ -169,7 +169,7 @@ def generate_answer(query: str, retrieved: list[dict[str, Any]]) -> str:
         try:
             client = google_genai.Client(api_key=api_key)
             response = client.models.generate_content(
-                model="gemini-3.6-flash",
+                model="gemini-1.5-flash",
                 contents=full_prompt,
             )
             text = getattr(response, "text", None)

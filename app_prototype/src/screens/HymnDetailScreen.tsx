@@ -2,19 +2,22 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Hymn } from '../database/db';
+import { BACKEND_URL } from '../services/api';
 
 export const HymnDetailScreen = ({ route }: any) => {
   const { hymn } = route.params as { hymn: Hymn };
   const [viewMode, setViewMode] = useState<'text' | 'pdf'>('text');
 
-  // 將 source_path (例如: '大本詩歌/100.pdf') 轉換成後端伺服器的靜態檔案 URL
-  // encodeURI 用於處理中文路徑
+  // 將 source_path 轉換成後端伺服器的靜態檔案 URL
   const getPdfUrl = () => {
     if (!hymn.source_path) return '';
-    return encodeURI(`http://localhost:8000/data/${hymn.source_path}`);
+    // source_path 已經包含 'data/' 前綴 (例如 'data/大本詩歌/xxx.pdf')
+    // 所以我們直接接在 BACKEND_URL 後面即可，不需要重複加上 /data/
+    return encodeURI(`${BACKEND_URL}/${hymn.source_path}`);
   };
 
   const isPdfAvailable = hymn.source_path && hymn.source_path.toLowerCase().endsWith('.pdf');
+
 
   return (
     <View style={styles.container}>

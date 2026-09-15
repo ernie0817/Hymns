@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import { Asset } from 'expo-asset';
 import { Platform } from 'react-native';
 
@@ -12,36 +12,41 @@ export const initDB = async () => {
   let dbPath = '';
 
   if (Platform.OS === 'web') {
-    console.warn("Web 平台不支援直接載入本地 SQLite 檔案。請使用 iOS/Android 模擬器測試搜尋功能。");
-    // Web 版建立一個記憶體/空資料庫避免 Crash
     db = await SQLite.openDatabaseAsync(dbName);
     return db;
   }
 
-  dbPath = `${FileSystem.documentDirectory}SQLite/${dbName}`;
+  // 為了徹底避開 Expo FileSystem 的 deprecated Error，這裡全部改用 FileSystemLegacy
+  dbPath = `${FileSystemLegacy.documentDirectory}SQLite/${dbName}`;
+  const dbDir = `${FileSystemLegacy.documentDirectory}SQLite`;
   
-  // 建立 SQLite 存放目錄
-  const dbDir = `${FileSystem.documentDirectory}SQLite`;
-  const dirInfo = await FileSystem.getInfoAsync(dbDir);
-  if (!dirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(dbDir, { intermediates: true });
-  }
+  try {
+    const dirInfo = await FileSystemLegacy.getInfoAsync(dbDir);
+    if (!dirInfo.exists) {
+      await FileSystemLegacy.makeDirectoryAsync(dbDir, { intermediates: true });
+    }
 
-  // 強制複製最新的 db 過去
-  const fileInfo = await FileSystem.getInfoAsync(dbPath);
-  if (fileInfo.exists) {
-    await FileSystem.deleteAsync(dbPath);
+    const fileInfo = await FileSystemLegacy.getInfoAsync(dbPath);
+    if (fileInfo.exists) {
+      await FileSystemLegacy.deleteAsync(dbPath);
+    }
+  } catch (error) {
+    console.warn("目錄檢查失敗，略過...", error);
   }
   
   console.log("複製資料庫從 Asset 到 local...");
-  const asset = await Asset.loadAsync(require('../../assets/hymns.db'));
-  if (asset[0].localUri) {
-    await FileSystem.copyAsync({
-      from: asset[0].localUri,
-      to: dbPath,
-    });
-  } else {
-    await FileSystem.downloadAsync(asset[0].uri, dbPath);
+  try {
+    const asset = await Asset.loadAsync(require('../../assets/hymns.db'));
+    if (asset[0].localUri) {
+      await FileSystemLegacy.copyAsync({
+        from: asset[0].localUri,
+        to: dbPath,
+      });
+    } else {
+      await FileSystemLegacy.downloadAsync(asset[0].uri, dbPath);
+    }
+  } catch (error) {
+    console.error("複製資料庫失敗:", error);
   }
 
   db = await SQLite.openDatabaseAsync(dbName);
@@ -57,9 +62,7 @@ export interface Hymn {
 }
 
 export const searchHymns = async (keyword: string, category: string = ''): Promise<Hymn[]> => {
-  if (Platform.OS === 'web') {
-    return []; // Web 版無法讀取本地 db，直接回傳空陣列避免報錯
-  }
+  if (Platform.OS === 'web') return [];
 
   try {
     const database = await initDB();

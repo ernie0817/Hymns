@@ -1,4 +1,15 @@
-export const API_BASE_URL = 'http://localhost:8000/api/v1';
+import { Platform } from 'react-native';
+
+const getBaseUrl = () => {
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8000';
+  }
+  // 在真機測試或 iOS Expo Go 遇到 localhost (-1004) 解析問題時，直接指定 Mac 的區域網路 IP
+  return 'http://10.240.103.92:8000';
+};
+
+export const BACKEND_URL = getBaseUrl();
+export const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 export interface ChatMessage {
   role: string;

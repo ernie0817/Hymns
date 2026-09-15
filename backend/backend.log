@@ -1,0 +1,227 @@
+INFO:     Will watch for changes in these directories: ['/Users/ernie/WorkSpace/side-project/Hymns/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [21084] using WatchFiles
+INFO:     Started server process [21140]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     10.240.103.113:49253 - "GET /data/data/%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C/Hymn_%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C022%5B%E6%95%AC%E6%8B%9C%E7%88%B6%EF%BC%8D%E7%A5%82%E7%9A%84%E6%86%90%E6%86%AB%5D.pdf HTTP/1.1" 404 Not Found
+INFO:     10.240.103.113:49256 - "GET /data/data/%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C/Hymn_%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C022%5B%E6%95%AC%E6%8B%9C%E7%88%B6%EF%BC%8D%E7%A5%82%E7%9A%84%E6%86%90%E6%86%AB%5D.pdf HTTP/1.1" 404 Not Found
+INFO:     10.240.103.113:49257 - "GET /data/data/%E8%A9%A9%E6%AD%8C%E8%A3%9C%E5%85%85%E6%9C%AC/Hymn_%E8%A3%9C%E5%85%85%E6%9C%AC839%5B%E9%9B%B2%E5%BD%A9%5D.pdf HTTP/1.1" 404 Not Found
+2026-09-15 11:28:57,116 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents "HTTP/1.1 403 Forbidden"
+2026-09-15 11:28:57,118 - hymn_app - ERROR - Chat completion failed for query: 開心的詩歌
+Traceback (most recent call last):
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/main.py", line 224, in chat_completions
+    retrieved = retrieve_hymns(query, top_k=3)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/main.py", line 91, in retrieve_hymns
+    query_embedding = embed_texts([query.strip()])[0]
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/scripts/build_vector_db.py", line 152, in embed_texts
+    return _embed_texts_gemini(texts, batch_size=batch_size)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/scripts/build_vector_db.py", line 198, in _embed_texts_gemini
+    response = client.models.embed_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 6125, in embed_content
+    return self._embed_content(model=model, contents=contents, config=config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 4936, in _embed_content
+    response = self._api_client.request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1750, in request
+    response = self._request(http_request, http_options, stream=False)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1537, in _request
+    return self._retry(self._request_once, http_request, stream)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 470, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 371, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 473, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1514, in _request_once
+    errors.APIError.raise_for_response(response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 173, in raise_for_response
+    cls.raise_error(response.status_code, response_json, response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 202, in raise_error
+    raise ClientError(status_code, response_json, response)
+google.genai.errors.ClientError: 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+INFO:     10.240.103.113:49275 - "POST /api/v1/chat/completions HTTP/1.1" 500 Internal Server Error
+INFO:     10.240.103.113:49282 - "GET /data/%E8%A9%A9%E6%AD%8C%E8%A3%9C%E5%85%85%E6%9C%AC/Hymn_%E8%A3%9C%E5%85%85%E6%9C%AC838%5B%E6%88%91%E5%B7%B2%E5%BE%97%E5%88%B0%E7%9C%9F%E6%AD%A3%E8%87%AA%E7%94%B1%5D.pdf HTTP/1.1" 200 OK
+INFO:     10.240.103.113:49284 - "GET /data/%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C/Hymn_%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C022%5B%E6%95%AC%E6%8B%9C%E7%88%B6%EF%BC%8D%E7%A5%82%E7%9A%84%E6%86%90%E6%86%AB%5D.pdf HTTP/1.1" 200 OK
+INFO:     10.240.103.113:49285 - "GET /data/%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C/Hymn_%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C032%5B%E6%95%AC%E6%8B%9C%E7%88%B6%20%E2%80%94%20%E7%A5%82%E7%9A%84%E8%B1%AB%E5%AE%9A%5D.pdf HTTP/1.1" 200 OK
+2026-09-15 11:31:58,031 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents "HTTP/1.1 403 Forbidden"
+2026-09-15 11:31:58,033 - hymn_app - ERROR - Chat completion failed for query: 喜樂
+Traceback (most recent call last):
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/main.py", line 224, in chat_completions
+    retrieved = retrieve_hymns(query, top_k=3)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/main.py", line 91, in retrieve_hymns
+    query_embedding = embed_texts([query.strip()])[0]
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/scripts/build_vector_db.py", line 152, in embed_texts
+    return _embed_texts_gemini(texts, batch_size=batch_size)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/scripts/build_vector_db.py", line 198, in _embed_texts_gemini
+    response = client.models.embed_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 6125, in embed_content
+    return self._embed_content(model=model, contents=contents, config=config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 4936, in _embed_content
+    response = self._api_client.request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1750, in request
+    response = self._request(http_request, http_options, stream=False)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1537, in _request
+    return self._retry(self._request_once, http_request, stream)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 470, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 371, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 473, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1514, in _request_once
+    errors.APIError.raise_for_response(response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 173, in raise_for_response
+    cls.raise_error(response.status_code, response_json, response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 202, in raise_error
+    raise ClientError(status_code, response_json, response)
+google.genai.errors.ClientError: 403 PERMISSION_DENIED. {'error': {'code': 403, 'message': 'Your API key was reported as leaked. Please use another API key.', 'status': 'PERMISSION_DENIED'}}
+INFO:     10.240.103.113:49291 - "POST /api/v1/chat/completions HTTP/1.1" 500 Internal Server Error
+WARNING:  WatchFiles detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [21140]
+INFO:     Started server process [23871]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+2026-09-15 11:34:59,717 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents "HTTP/1.1 200 OK"
+2026-09-15 11:34:59,789 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-15 11:34:59,789 - google_genai.models - WARNING - Direct use of automatic function calling (AFC) in Models.generate_content is not recommended. Instead, we recommend to use AFC in Chat.send_message. Similarly, direct use of AFC in Models.generate_content_stream is not recommended. Instead, we recommend to use AFC in Chat.send_message_stream.
+2026-09-15 11:35:00,004 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent "HTTP/1.1 404 Not Found"
+2026-09-15 11:35:00,005 - hymn_app - WARNING - Google GenAI 生成內容時發生錯誤: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+Traceback (most recent call last):
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/main.py", line 171, in generate_answer
+    response = client.models.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 6270, in generate_content
+    response = self._generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 4707, in _generate_content
+    response = self._api_client.request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1750, in request
+    response = self._request(http_request, http_options, stream=False)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1537, in _request
+    return self._retry(self._request_once, http_request, stream)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 470, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 371, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 473, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1514, in _request_once
+    errors.APIError.raise_for_response(response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 173, in raise_for_response
+    cls.raise_error(response.status_code, response_json, response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 202, in raise_error
+    raise ClientError(status_code, response_json, response)
+google.genai.errors.ClientError: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+INFO:     10.240.103.113:49316 - "POST /api/v1/chat/completions HTTP/1.1" 200 OK
+2026-09-15 11:35:43,105 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents "HTTP/1.1 200 OK"
+2026-09-15 11:35:43,161 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-15 11:35:43,396 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent "HTTP/1.1 404 Not Found"
+2026-09-15 11:35:43,398 - hymn_app - WARNING - Google GenAI 生成內容時發生錯誤: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+Traceback (most recent call last):
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/main.py", line 171, in generate_answer
+    response = client.models.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 6270, in generate_content
+    response = self._generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 4707, in _generate_content
+    response = self._api_client.request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1750, in request
+    response = self._request(http_request, http_options, stream=False)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1537, in _request
+    return self._retry(self._request_once, http_request, stream)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 470, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 371, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 473, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1514, in _request_once
+    errors.APIError.raise_for_response(response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 173, in raise_for_response
+    cls.raise_error(response.status_code, response_json, response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 202, in raise_error
+    raise ClientError(status_code, response_json, response)
+google.genai.errors.ClientError: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+INFO:     10.240.103.113:49317 - "POST /api/v1/chat/completions HTTP/1.1" 200 OK
