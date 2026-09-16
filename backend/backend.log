@@ -466,3 +466,57 @@ Traceback (most recent call last):
     raise ClientError(status_code, response_json, response)
 google.genai.errors.ClientError: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
 INFO:     10.240.103.113:59467 - "POST /api/v1/chat/completions HTTP/1.1" 200 OK
+INFO:     10.240.103.113:59482 - "GET /data/%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C/Hymn_%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C016%5B%E6%95%AC%E6%8B%9C%E7%88%B6%EF%BC%8D%E7%A5%82%E7%9A%84%E5%85%AC%E7%BE%A9%5D.pdf HTTP/1.1" 200 OK
+INFO:     10.240.103.113:60057 - "GET /data/%E6%96%B0%E8%A9%A9%28%E7%B4%85%E7%9A%AE%29/Hymn_%E6%96%B0%E8%A9%A901%5B%E6%AD%A1%E8%BF%8E%E4%BD%A0%5D.pdf HTTP/1.1" 200 OK
+INFO:     10.240.103.113:60062 - "GET /data/%E6%96%B0%E8%A9%A9%28%E8%97%8D%E7%9A%AE%29/Hymn_%E6%96%B0%E8%A9%A9002%5B%E6%B7%B1%E6%84%9B%E8%91%97%E7%A5%A2%5D.pdf HTTP/1.1" 200 OK
+INFO:     10.240.103.113:60063 - "GET /data/%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C/Hymn_%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C002%5B%E9%A0%8C%E8%AE%9A%E4%B8%89%E4%B8%80%E7%A5%9E%20%E2%80%94%20%E7%A5%82%E7%9A%84%E5%95%9F%E7%A4%BA%5D.pdf HTTP/1.1" 200 OK
+INFO:     10.240.103.113:60064 - "GET /data/%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C/Hymn_%E5%A4%A7%E6%9C%AC%E8%A9%A9%E6%AD%8C%E9%99%841%5B%E8%AE%9A%E7%BE%8E%E4%B8%BB%EF%BC%8D%E4%B8%80%E8%88%AC%5D.pdf HTTP/1.1" 200 OK
+2026-09-16 10:17:17,950 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents "HTTP/1.1 200 OK"
+2026-09-16 10:17:18,016 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-16 10:17:18,243 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent "HTTP/1.1 404 Not Found"
+2026-09-16 10:17:18,245 - hymn_app - WARNING - Google GenAI 生成內容時發生錯誤: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+Traceback (most recent call last):
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/main.py", line 171, in generate_answer
+    response = client.models.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 6270, in generate_content
+    response = self._generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/models.py", line 4707, in _generate_content
+    response = self._api_client.request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1750, in request
+    response = self._request(http_request, http_options, stream=False)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1537, in _request
+    return self._retry(self._request_once, http_request, stream)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 470, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 371, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/tenacity/__init__.py", line 473, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/_api_client.py", line 1514, in _request_once
+    errors.APIError.raise_for_response(response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 173, in raise_for_response
+    cls.raise_error(response.status_code, response_json, response)
+  File "/Users/ernie/WorkSpace/side-project/Hymns/backend/venv/lib/python3.11/site-packages/google/genai/errors.py", line 202, in raise_error
+    raise ClientError(status_code, response_json, response)
+google.genai.errors.ClientError: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+INFO:     10.240.103.113:60066 - "POST /api/v1/chat/completions HTTP/1.1" 200 OK
+INFO:     10.240.103.113:52111 - "GET /data/%E5%85%92%E7%AB%A5%E8%A9%A9%E6%AD%8C/Hymn_%E5%85%92%E7%AB%A5%E8%A9%A9%E6%AD%8C001%5B%E7%A5%9E%E8%AA%AA%E8%A6%81%E6%9C%89%E5%85%89%5D.pdf HTTP/1.1" 200 OK
