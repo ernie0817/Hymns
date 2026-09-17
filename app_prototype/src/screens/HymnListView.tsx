@@ -25,14 +25,12 @@ export const HymnListView = ({ navigation }: any) => {
 
 
   const renderItem = ({ item }: { item: Hymn }) => {
-    const hasPdf = item.source_path && item.source_path.toLowerCase().endsWith('.pdf');
     return (
       <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('HymnDetail', { hymn: item })} activeOpacity={0.7}>
         <View style={styles.itemContent}>
           <Text style={styles.title}>{item.id} - {item.title}</Text>
           <View style={styles.badgeContainer}>
             <Text style={styles.categoryBadge}>{item.category}</Text>
-            {hasPdf && <View style={styles.pdfBadge}><Ionicons name="document-text" size={12} color="#fff" /><Text style={styles.pdfText}>PDF</Text></View>}
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#c7c7cc" />
