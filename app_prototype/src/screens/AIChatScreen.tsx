@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendChatMessageStream, ChatMessage, RecommendationItem } from '../services/api';
 import { searchHymns } from '../database/db';
+
+import { useHeaderHeight } from '@react-navigation/elements';
+
+const CHAT_HISTORY_KEY = '@hymn_chat_history';
 
 interface Message {
   id: string;
@@ -15,6 +20,41 @@ export const AIChatScreen = ({ navigation }: any) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+  const headerHeight = useHeaderHeight();
+
+  // 初次載入時，從 AsyncStorage 讀取歷史紀錄
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const savedData = await AsyncStorage.getItem(CHAT_HISTORY_KEY);
+        if (savedData) {
+          setMessages(JSON.parse(savedData));
+        }
+      } catch (e) {
+        console.error("Failed to load chat history", e);
+      }
+    };
+    loadHistory();
+  }, []);
+
+  // 當 messages 改變時（且不在串流中），自動儲存到 AsyncStorage
+  useEffect(() => {
+    const saveHistory = async () => {
+      try {
+        // 過濾掉還在 streaming 狀態的殘缺訊息，確保只存完整的對話
+        const completedMessages = messages.filter(m => !m.isStreaming);
+        await AsyncStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(completedMessages));
+      } catch (e) {
+        console.error("Failed to save chat history", e);
+      }
+    };
+    
+    // 我們可以加一個簡單防抖，或者直接存
+    if (messages.length > 0) {
+      saveHistory();
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -98,30 +138,47 @@ export const AIChatScreen = ({ navigation }: any) => {
   );
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessage}
-        contentContainerStyle={styles.list}
-      />
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="輸入您的心情或需求..."
-          value={input}
-          onChangeText={setInput}
-          onSubmitEditing={sendMessage}
-        />
-        <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.sendText}>發送</Text>}
+    <View style={{ flex: 1, backgroundColor: '#f9f9f9' }}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>歷史紀錄</Text>
+        <TouchableOpacity onPress={async () => {
+          setMessages([]);
+          await AsyncStorage.removeItem(CHAT_HISTORY_KEY);
+        }}>
+          <Text style={styles.clearBtn}>清除對話</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight + 50 : 0}>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          contentContainerStyle={styles.list}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="輸入您的心情或需求..."
+            value={input}
+            onChangeText={setInput}
+            onSubmitEditing={sendMessage}
+          />
+          <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.sendText}>發送</Text>}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#eee' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold' },
+  clearBtn: { color: '#FF3B30', fontSize: 16 },
   container: { flex: 1, backgroundColor: '#f9f9f9' },
   list: { padding: 16 },
   bubble: { maxWidth: '80%', padding: 12, borderRadius: 16, marginBottom: 12 },

@@ -54,7 +54,10 @@ export const HymnListView = ({ navigation }: any) => {
         )} />
       </View>
       {loading ? <View style={styles.centerContainer}><ActivityIndicator size="large" color="#d3a25d" /></View> : hymns.length === 0 ? <View style={styles.centerContainer}><Text style={styles.emptyText}>無結果</Text></View> : <FlatList data={hymns} keyExtractor={(item, i) => `${item.category}_${item.id}_${i}`} renderItem={renderItem} contentContainerStyle={styles.list} />}
-      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('AIChat')} activeOpacity={0.8}><Ionicons name="chatbubbles" size={24} color="#fff" /></TouchableOpacity>
+      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('AIChat')} activeOpacity={0.8}>
+        <Ionicons name="chatbubbles" size={24} color="#fff" />
+        <Text style={styles.fabText}>AI 助理</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -81,5 +84,6 @@ const styles = StyleSheet.create({
   pdfText: { fontSize: 10, color: '#fff', fontWeight: 'bold', marginLeft: 2 },
   centerContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', margin: 80 },
   emptyText: { marginTop: 16, fontSize: 16, color: '#8e8e93', fontWeight: '500' },
-  fab: { position: 'absolute', bottom: 32, right: 24, backgroundColor: '#4a6572', flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 30, shadowColor: '#4a6572', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 }
+  fab: { position: 'absolute', bottom: 32, right: 24, backgroundColor: '#4a6572', flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderRadius: 30, shadowColor: '#4a6572', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 },
+  fabText: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginLeft: 8 }
 });
