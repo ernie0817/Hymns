@@ -16,10 +16,17 @@ if not logger.handlers:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
+# 為了相容新舊版 Gemini SDK
+try:
+    import google.generativeai as genai_legacy
+except ImportError:
+    genai_legacy = None
+
 try:
     from google import genai as google_genai
-except ImportError:  # pragma: no cover
+except ImportError:
     google_genai = None
+
 
 try:
     from openai import OpenAI
@@ -165,26 +172,37 @@ def generate_answer(query: str, retrieved: list[dict[str, Any]]) -> str:
     context_prompt = build_context_prompt(query, retrieved)
     full_prompt = f"{SYSTEM_PROMPT}\n\n{context_prompt}\n\n請根據以上內容，回覆使用者的心情與需求，並給出一段充滿安慰與信心的回應。"
 
-    if api_key and google_genai is not None:
-        try:
-            client = google_genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model="gemini-1.5-flash",
-                contents=full_prompt,
-            )
-            text = getattr(response, "text", None)
-            if isinstance(text, str) and text.strip():
-                return text.strip()
-            if hasattr(response, "candidates") and response.candidates:
-                candidate = response.candidates[0]
-                if hasattr(candidate, "content"):
-                    parts = getattr(candidate.content, "parts", [])
-                    if parts:
-                        joined = "".join(getattr(part, "text", "") for part in parts if getattr(part, "text", None))
-                        if joined.strip():
-                            return joined.strip()
-        except Exception as e:
-            logger.warning(f"Google GenAI 生成內容時發生錯誤: {e}", exc_info=True)
+    if api_key:
+        if genai_legacy is not None:
+            try:
+                genai_legacy.configure(api_key=api_key)
+                model = genai_legacy.GenerativeModel("gemini-3.6-flash")
+                response = model.generate_content(full_prompt)
+                if response.text and response.text.strip():
+                    return response.text.strip()
+            except Exception as e:
+                logger.warning(f"Legacy Google GenAI 生成內容時發生錯誤: {e}", exc_info=True)
+        
+        elif google_genai is not None:
+            try:
+                client = google_genai.Client(api_key=api_key)
+                response = client.models.generate_content(
+                    model="gemini-3.6-flash",
+                    contents=full_prompt,
+                )
+                text = getattr(response, "text", None)
+                if isinstance(text, str) and text.strip():
+                    return text.strip()
+                if hasattr(response, "candidates") and response.candidates:
+                    candidate = response.candidates[0]
+                    if hasattr(candidate, "content"):
+                        parts = getattr(candidate.content, "parts", [])
+                        if parts:
+                            joined = "".join(getattr(part, "text", "") for part in parts if getattr(part, "text", None))
+                            if joined.strip():
+                                return joined.strip()
+            except Exception as e:
+                logger.warning(f"Google GenAI 生成內容時發生錯誤: {e}", exc_info=True)
 
     api_key_openai = resolve_api_key("OPENAI_API_KEY")
     if api_key_openai and OpenAI is not None:

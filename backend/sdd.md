@@ -1,0 +1,1 @@
+- **LLM Engine:** OpenAI API (gpt-4o-mini) / Gemini API (gemini-3.6-flash) / local model (Ollama)

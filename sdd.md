@@ -8,7 +8,7 @@
 - **Backend API:** Python FastAPI (負責 RAG 流程、Prompt 組裝、LLM 串接)
 - **Vector Database:** Qdrant / Chroma / Pinecone (存放詩歌向量與 Metadata)
 - **Database (Relational):** SQLite (App 端離線儲存) / PostgreSQL (後端伺服器)
-- **LLM Engine:** OpenAI API (gpt-4o-mini) / Gemini API (gemini-1.5-flash) / local model (Ollama)
+- **LLM Engine:** OpenAI API (gpt-4o-mini) / Gemini API (gemini-3.6-flash) / local model (Ollama)
 ## 3. 資料處理管道 (Data Pipeline)
 原始資料來源：`.docx` / `.pdf` 詩歌檔案。
 
