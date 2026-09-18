@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Any
 
 import chromadb
+import json
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("hymn_app")
@@ -69,6 +71,7 @@ class ChatMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     query: str = Field(..., min_length=1, description="User question or request")
     history: list[ChatMessage] = Field(default_factory=list)
+    stream: bool = Field(False, description="Whether to stream the response as SSE")
 
 
 class RecommendationItem(BaseModel):
@@ -232,18 +235,72 @@ def generate_answer(query: str, retrieved: list[dict[str, Any]]) -> str:
     return _fallback_answer(query, retrieved)
 
 
-@app.post("/api/v1/chat/completions", response_model=ChatCompletionResponse)
-def chat_completions(payload: ChatCompletionRequest) -> ChatCompletionResponse:
+def generate_answer_stream(query: str, retrieved: list[dict[str, Any]]):
+    context_prompt = build_context_prompt(query, retrieved)
+    full_prompt = f"{SYSTEM_PROMPT}\n\n{context_prompt}\n\n請根據以上內容，回覆使用者的心情與需求，並給出一段充滿安慰與信心的回應。"
+
+    api_key = resolve_api_key("GEMINI_API_KEY", "GOOGLE_API_KEY")
+    if api_key:
+        if genai_legacy is not None:
+            try:
+                genai_legacy.configure(api_key=api_key)
+                model = genai_legacy.GenerativeModel("gemini-3.6-flash")
+                response = model.generate_content(full_prompt, stream=True)
+                for chunk in response:
+                    if chunk.text:
+                        yield chunk.text
+                return
+            except Exception as e:
+                logger.warning(f"Legacy Google GenAI 生成內容時發生錯誤: {e}", exc_info=True)
+        
+        elif google_genai is not None:
+            try:
+                client = google_genai.Client(api_key=api_key)
+                response = client.models.generate_content_stream(
+                    model="gemini-3.6-flash",
+                    contents=full_prompt,
+                )
+                for chunk in response:
+                    if chunk.text:
+                        yield chunk.text
+                return
+            except Exception as e:
+                logger.warning(f"Google GenAI 生成內容時發生錯誤: {e}", exc_info=True)
+
+    api_key_openai = resolve_api_key("OPENAI_API_KEY")
+    if api_key_openai and OpenAI is not None:
+        try:
+            client = OpenAI(api_key=api_key_openai)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": full_prompt},
+                ],
+                stream=True,
+            )
+            for chunk in response:
+                content = chunk.choices[0].delta.content
+                if content:
+                    yield content
+            return
+        except Exception as e:
+            logger.warning(f"OpenAI 生成內容時發生錯誤: {e}", exc_info=True)
+
+    yield _fallback_answer(query, retrieved)
+
+
+@app.post("/api/v1/chat/completions")
+def chat_completions(payload: ChatCompletionRequest):
     query = payload.query.strip()
     if not query:
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
     try:
         retrieved = retrieve_hymns(query, top_k=3)
-        answer = generate_answer(query, retrieved)
     except Exception as exc:
-        logger.exception("Chat completion failed for query: %s", query)
-        raise HTTPException(status_code=500, detail=f"Chat completion failed: {exc}") from exc
+        logger.exception("Retrieve failed for query: %s", query)
+        raise HTTPException(status_code=500, detail=f"Retrieve failed: {exc}") from exc
 
     recommendations = [
         RecommendationItem(
@@ -255,6 +312,28 @@ def chat_completions(payload: ChatCompletionRequest) -> ChatCompletionResponse:
         )
         for item in retrieved
     ]
+
+    if payload.stream:
+        def event_generator():
+            meta_data = {"type": "meta", "recommendations": [r.model_dump() if hasattr(r, 'model_dump') else r.dict() for r in recommendations]}
+            yield f"data: {json.dumps(meta_data, ensure_ascii=False)}\n\n"
+            
+            try:
+                for chunk in generate_answer_stream(query, retrieved):
+                    chunk_data = {"type": "chunk", "text": chunk}
+                    yield f"data: {json.dumps(chunk_data, ensure_ascii=False)}\n\n"
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            except Exception as exc:
+                logger.exception("Chat completion streaming failed")
+                yield f"data: {json.dumps({'type': 'error', 'detail': str(exc)}, ensure_ascii=False)}\n\n"
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+    try:
+        answer = generate_answer(query, retrieved)
+    except Exception as exc:
+        logger.exception("Chat completion failed for query: %s", query)
+        raise HTTPException(status_code=500, detail=f"Chat completion failed: {exc}") from exc
 
     return ChatCompletionResponse(
         answer=answer,

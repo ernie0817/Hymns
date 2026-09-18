@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import EventSource from 'react-native-sse';
 
 const getBaseUrl = () => {
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:8000';
   }
-  // 如果是實體裝置 (Expo Go)，我們可以動態抓取 Expo 打包伺服器的 IP (這通常也是 Mac 的 IP)
   const debuggerHost = Constants.expoConfig?.hostUri;
   if (debuggerHost) {
     const ip = debuggerHost.split(':')[0];
@@ -51,3 +51,50 @@ export const sendChatMessage = async (query: string, history: ChatMessage[] = []
 
   return response.json();
 };
+
+export const sendChatMessageStream = (
+  query: string,
+  history: ChatMessage[],
+  onMeta: (recommendations: RecommendationItem[]) => void,
+  onChunk: (text: string) => void,
+  onDone: () => void,
+  onError: (error: any) => void
+) => {
+  const es = new EventSource(`${API_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query, history, stream: true }),
+  });
+
+  es.addEventListener('message', (event: any) => {
+    if (event.data) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'meta') {
+          onMeta(data.recommendations || []);
+        } else if (data.type === 'chunk') {
+          if (data.text) {
+            onChunk(data.text);
+          }
+        } else if (data.type === 'done') {
+          es.close();
+          onDone();
+        } else if (data.type === 'error') {
+          onError(new Error(data.detail));
+          es.close();
+        }
+      } catch (e) {
+        console.error('SSE parse error:', e);
+      }
+    }
+  });
+
+  es.addEventListener('error', (event: any) => {
+    console.error('SSE error:', event);
+    onError(new Error('連線發生錯誤'));
+    es.close();
+  });
+};
+

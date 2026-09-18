@@ -22,5 +22,23 @@ def run_tests():
         print(response.text)
         exit(1)
 
+def test_stream_api():
+    print("\nTesting /api/v1/chat/completions (stream)...")
+    response = client.post(
+        "/api/v1/chat/completions",
+        json={"query": "平安", "stream": True},
+        stream=True
+    )
+    if response.status_code == 200:
+        print("Success! Stream Output:")
+        for line in response.iter_lines():
+            if line:
+                print(line)
+    else:
+        print(f"Failed! Status code: {response.status_code}")
+        print(response.text)
+        exit(1)
+
 if __name__ == "__main__":
     run_tests()
+    test_stream_api()

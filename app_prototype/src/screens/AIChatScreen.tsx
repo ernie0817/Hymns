@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
-import { sendChatMessage, ChatMessage, RecommendationItem } from '../services/api';
+import { sendChatMessageStream, ChatMessage, RecommendationItem } from '../services/api';
 import { searchHymns } from '../database/db';
 
 interface Message {
@@ -8,6 +8,7 @@ interface Message {
   role: 'user' | 'assistant';
   text: string;
   recommendations?: RecommendationItem[];
+  isStreaming?: boolean;
 }
 
 export const AIChatScreen = ({ navigation }: any) => {
@@ -23,23 +24,42 @@ export const AIChatScreen = ({ navigation }: any) => {
     setInput('');
     setLoading(true);
 
-    try {
-      const history: ChatMessage[] = messages.map(m => ({ role: m.role, content: m.text }));
-      const response = await sendChatMessage(userMsg.text, history);
+    const history: ChatMessage[] = messages.map(m => ({ role: m.role, content: m.text }));
+    
+    // 預先建立一個 AI 訊息佔位符
+    const aiMessageId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, { id: aiMessageId, role: 'assistant', text: '', isStreaming: true }]);
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        text: response.answer,
-        recommendations: response.recommendations
-      };
-      setMessages(prev => [...prev, aiMsg]);
-    } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', text: '抱歉，伺服器發生錯誤。' }]);
-    } finally {
-      setLoading(false);
-    }
+    sendChatMessageStream(
+      userMsg.text,
+      history,
+      (recommendations) => {
+        // 收到 meta: 更新推薦詩歌 (此時存在 state 中，但先不顯示)
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId ? { ...msg, recommendations } : msg
+        ));
+      },
+      (textChunk) => {
+        // 收到 chunk: 拼接文字
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId ? { ...msg, text: msg.text + textChunk } : msg
+        ));
+      },
+      () => {
+        // 串流結束，關閉 isStreaming 狀態以顯示推薦詩歌
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId ? { ...msg, isStreaming: false } : msg
+        ));
+        setLoading(false);
+      },
+      (error) => {
+        console.error(error);
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId ? { ...msg, text: msg.text + '\n(抱歉，伺服器發生錯誤。)', isStreaming: false } : msg
+        ));
+        setLoading(false);
+      }
+    );
   };
 
   const handleRecommendationPress = async (rec: RecommendationItem) => {
@@ -63,7 +83,7 @@ export const AIChatScreen = ({ navigation }: any) => {
   const renderMessage = ({ item }: { item: Message }) => (
     <View style={[styles.bubble, item.role === 'user' ? styles.userBubble : styles.aiBubble]}>
       <Text style={item.role === 'user' ? styles.userText : styles.aiText}>{item.text}</Text>
-      {item.recommendations && item.recommendations.length > 0 && (
+      {!item.isStreaming && item.recommendations && item.recommendations.length > 0 && (
         <View style={styles.recommendationContainer}>
           <Text style={styles.recTitle}>推薦詩歌：</Text>
           {item.recommendations.map((rec, index) => (
