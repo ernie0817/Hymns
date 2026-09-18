@@ -9,6 +9,7 @@ import chromadb
 import time
 import json
 import re
+import aiohttp
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.concurrency import run_in_threadpool
@@ -316,6 +317,36 @@ async def generate_answer_stream_async(query: str, retrieved: list[dict[str, Any
     context_prompt = build_context_prompt(query, retrieved)
     full_prompt = f"{SYSTEM_PROMPT}\n\n{context_prompt}\n\n請根據以上內容，回覆使用者的心情與需求，並給出一段充滿安慰與信心的回應。"
 
+    # 1. 優先檢查是否開啟 Ollama 本地模型
+    use_ollama = os.getenv("USE_OLLAMA", "false").lower() == "true"
+    if use_ollama:
+        ollama_url = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api/generate")
+        ollama_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+        payload = {
+            "model": ollama_model,
+            "prompt": full_prompt,
+            "stream": True
+        }
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(ollama_url, json=payload) as resp:
+                    if resp.status == 200:
+                        async for line in resp.content:
+                            if line:
+                                try:
+                                    data = json.loads(line.decode('utf-8'))
+                                    if "response" in data:
+                                        yield data["response"]
+                                except json.JSONDecodeError:
+                                    pass
+                        return
+                    else:
+                        logger.warning(f"Ollama 回傳錯誤狀態碼: {resp.status}")
+        except Exception as e:
+            logger.warning(f"連接 Ollama 失敗: {e}", exc_info=True)
+            # 發生錯誤則退回雲端模型
+
+    # 2. 如果沒用 Ollama 或 Ollama 失敗，則使用 Gemini
     api_key = resolve_api_key("GEMINI_API_KEY", "GOOGLE_API_KEY")
     if api_key:
         if genai_legacy is not None:
